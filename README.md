@@ -1,1 +1,11 @@
-# webdevxp
+# Harx Pay
+
+The browser UI is connected to the Express/MongoDB API in `backend/`. Run the app from the repository root with `node backend/server.js` (or `cd backend` and `npm start`) after configuring `backend/.env`; the API serves the frontend on the same origin. For GitHub Pages or another separate frontend host, configure the public backend `/api` URL as the `HARX_API_BASE_URL` repository Actions variable and add the frontend origin to `CORS_ORIGINS`. GitHub Pages serves only the static frontend; it does not run Express or receive payment webhooks.
+
+The frontend stores only display preferences in local storage and keeps the JWT in session storage. Account, wallet, machine, team, and admin data are fetched from the API. Ensure the backend has MongoDB configured, a strong `JWT_SECRET`, bootstrap admin passwords, and `API_SETTINGS_ENCRYPTION_KEY` before deployment. Use HTTPS in production; do not send payment credentials in chat or expose them in frontend configuration.
+
+## PesaJet integration status
+
+The callback route is implemented at `POST /api/pesajet/callback`; configure PesaJet with `https://<your-backend-host>/api/pesajet/callback` after deploying the Express backend to a public HTTPS host. The GitHub Pages URL is not a webhook endpoint.
+
+The PesaJet Node SDK contract uses `POST /payments` for collections and disbursements, `GET /payments/:transactionId` for status, and `X-API-Key` authentication. The webhook uses `X-Webhook-Signature` with HMAC-SHA256 over the canonical JSON payload with its `signature` property excluded; `payment.completed`, `payment.failed`, and `payment.expired` events are handled idempotently and checked against the transaction reference, amount, and UGX currency. The configured API base is `https://payments.pesajet.com/api/v1`. Live requests remain blocked by default until credentials and the public callback URL are configured and the contract is confirmed in backend configuration. Enter credentials only through the authenticated super-admin settings over HTTPS. The backend encrypts credentials at rest.
